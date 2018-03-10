@@ -497,7 +497,8 @@
   (if (null? s)
       (list nil)
       (let ((rest (subsets (cdr s))))
-        (append rest (map ??FILL-THIS-IN?? rest)))))
+        (append rest (map (lambda (x)
+                            (cons (car s) x)) rest)))))
 
 
 ;;;SECTION 2.2.3
