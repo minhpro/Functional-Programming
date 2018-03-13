@@ -610,8 +610,8 @@
 (define (accumulate-n op init seqs)
   (if (null? (car seqs))
       nil
-      (cons (accumulate op init ??FILL-THIS-IN??)
-            (accumulate-n op init ??FILL-THIS-IN??))))
+      (cons (accumulate op init (map car seqs))
+            (accumulate-n op init (map cdr seqs)))))
 
 ;: (accumulate-n + 0 s)
 
@@ -636,6 +636,12 @@
 ;: (fold-right list nil (list 1 2 3))
 ;: (fold-left list nil (list 1 2 3))
 
+;; EXERCISE 2.39
+(define (reverse-r items)
+  (fold-right (lambda (x y) (append y (list x))) nil items))
+
+(define (reverse-l items)
+  (fold-left (lambda (x y) (cons y x)) nil items))
 
 ;;Nested mappings
 
