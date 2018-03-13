@@ -638,6 +638,12 @@
 ;: (fold-right list nil (list 1 2 3))
 ;: (fold-left list nil (list 1 2 3))
 
+;; EXERCISE 2.39
+(define (reverse-r items)
+  (fold-right (lambda (x y) (append y (list x))) nil items))
+
+(define (reverse-l items)
+  (fold-left (lambda (x y) (cons y x)) nil items))
 
 ;;Nested mappings
 
