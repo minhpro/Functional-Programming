@@ -929,7 +929,13 @@
 ;; EXERCISE 2.54
 ;: (equal? '(this is a list) '(this is a list))
 ;: (equal? '(this is a list) '(this (is a) list))
-
+(define (equal? x y)
+  (cond ((and (pair? x) (pair? y)) 
+          (and (equal? (car x) (car y)) 
+                (equal? (cdr x) (cdr y))))
+        ((not (and (pair? x) (pair? y)))
+          (eq? x y))
+        (else false)))
 ;; EXERCISE 2.55
 ;: (car ''abracadabra)
 
