@@ -599,8 +599,10 @@
 
 
 ;; EXERCISE 2.34
+;(+ (* higher-terms x) coefficient)
 (define (horner-eval x coefficient-sequence)
-  (accumulate (lambda (this-coeff higher-terms) ??FILL-THIS-IN??)
+  (accumulate (lambda (this-coeff higher-terms) 
+                (+ (* higher-terms x) this-coeff))
               0
               coefficient-sequence))
 
@@ -610,8 +612,8 @@
 (define (accumulate-n op init seqs)
   (if (null? (car seqs))
       nil
-      (cons (accumulate op init ??FILL-THIS-IN??)
-            (accumulate-n op init ??FILL-THIS-IN??))))
+      (cons (accumulate op init (map car seqs))
+            (accumulate-n op init (map cdr seqs)))))
 
 ;: (accumulate-n + 0 s)
 
