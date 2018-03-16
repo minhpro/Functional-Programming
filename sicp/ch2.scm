@@ -1038,6 +1038,11 @@
                (intersection-set (cdr set1) set2)))
         (else (intersection-set (cdr set1) set2))))
 
+;;EXERCISE 2.59
+(define (union-set set1 set2)
+  (cond ((null? set1) set2)
+        ((null? set2) set1)
+        (union-set (cdr set1) (adjoin-set (car set1) set2))))
 
 ;; ORDERED
 
@@ -1060,7 +1065,24 @@
               ((< x2 x1)
                (intersection-set set1 (cdr set2)))))))
 
+;;EXERCISE 2.61
+(define (adjoin-set x set)
+  (cond ((null? set) (list x))
+        ((= x (car set)) set)
+        ((< x (car set)) (cons x set))
+        (else (cons (car set) (adjoin-set x (cdr set))))))
+
+;;EXERCISE 2.62
+(define (union-set set1 set2)
+  (if (or (null? set1) (null? set2))
+      '()
+      (let ((x1 (car set1)) (x2 (car set2)))
+        (cond ((= x1 x2) (cons x1 (union-set (cdr set1) (cdr set2))))
+              ((< x1 x2) (union-set (cdr set1) set2))
+              (else (union-set set1 (cdr set2)))))))
+
 ;; BINARY TREES
+
 (define (entry tree) (car tree))
 
 (define (left-branch tree) (cadr tree))
@@ -1089,7 +1111,6 @@
          (make-tree (entry set)
                     (left-branch set)
                     (adjoin-set x (right-branch set))))))
-
 
 ;; EXERCISE 2.63
 (define (tree->list-1 tree)
@@ -1228,6 +1249,21 @@
       '()
       (append (encode-symbol (car message) tree)
               (encode (cdr message) tree))))
+
+(define (branch-correct? symbol branch)
+    (if (leaf? branch)
+        (equal? symbol (symbol-leaf branch))
+        (element-of-set? symbol (symbols branch))))
+
+(define (encode-symbol symbol tree)
+  (let ((lb (left-branch tree))
+        (rb (right-branch tree)))
+      (cond ((branch-correct? lb)
+              (if (leaf? lb) '(0) (cons 0 (encode-symbol symbol lb))))
+            ((branch-correct? rb)
+              (if (leaf? rb) '(1) (cons 1 (encode-symbol symbol rb))))
+            (else (error "bad symbol --ENCODE-SYMBOL" symbol)))))
+  
 
 ;; EXERCISE 2.69
 
