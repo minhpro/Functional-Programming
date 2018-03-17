@@ -1258,9 +1258,9 @@
 (define (encode-symbol symbol tree)
   (let ((lb (left-branch tree))
         (rb (right-branch tree)))
-      (cond ((branch-correct? lb)
+      (cond ((branch-correct? symbol lb)
               (if (leaf? lb) '(0) (cons 0 (encode-symbol symbol lb))))
-            ((branch-correct? rb)
+            ((branch-correct? symbol rb)
               (if (leaf? rb) '(1) (cons 1 (encode-symbol symbol rb))))
             (else (error "bad symbol --ENCODE-SYMBOL" symbol)))))
   
