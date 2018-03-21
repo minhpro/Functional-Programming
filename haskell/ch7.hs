@@ -47,3 +47,21 @@ curry' f x y = f (x, y)
 
 uncurry' :: (a -> b -> c) -> ((a, b) -> c)
 uncurry' f p = f (fst p) (snd p)
+
+--6 Unfold function
+unfold :: (a -> Bool) -> (a -> b) -> (a -> a) -> a -> [b]
+unfold p h t x  | p x       = []
+                | otherwise = h x : unfold p h t (t x) 
+
+--int2bin 13 = [1,1,0,1]
+int2bin = unfold (== 0) (`mod` 2) (`div` 2)
+
+--chop4 [1,0,1,1,1,1,0,0] = [[1,0,1,1],[1,1,0,0]]
+chop4 :: Eq a => [a] -> [[a]]
+chop4 = unfold (== []) (take 4) (drop 4)
+
+--8 altMap function
+--altMap (+10) (+100) [1,2,3,4] = [11, 102, 13, 104]
+altMap :: (a -> b) -> (a -> b) -> [a] -> [b]
+altMap f g [] = []
+altMap f g (x:xs) = f x : altMap g f xs
