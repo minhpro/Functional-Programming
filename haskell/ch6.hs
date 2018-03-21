@@ -10,8 +10,8 @@ msort :: Ord a => [a] -> [a]
 msort [] = []
 msort [x] = [x]
 msort xs = merge (msort first) (msort second)
-                where
-                    (first, second) = halve xs
+                    where 
+                        (first, second) = halve xs
 
 -- Split a list into two halves                    
 halve :: [a] -> ([a],[a])

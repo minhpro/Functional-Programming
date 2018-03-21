@@ -1,3 +1,6 @@
+twice :: (a -> a) -> a -> a
+twice f x = f (f x)
+
 --1.List comprehension using map and filter
 list_cons :: (a -> b) -> (a -> Bool) -> [a] -> [b]
 list_cons f p = (map f) . (filter p)
