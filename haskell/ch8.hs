@@ -89,3 +89,70 @@ occurs x (Node l y r)   = x == y || occurs x l || occurs x r
 flatten :: Tree a -> [a]
 flatten (Leaf x) = [x]
 flatten (Node l x r) = (flatten l) ++ [x] ++ (flatten r) 
+
+--Tautology checker
+data Prop = Const Bool | Var Char | Not Prop | And Prop Prop | Imply Prop Prop
+                deriving (Eq, Ord, Show, Read)
+
+type Subst = Assoc Char Bool
+
+--evaluate a Proposition given a Subst
+eval :: Subst -> Prop -> Bool 
+eval _ (Const b) = b 
+eval s (Var x) = find x s 
+eval s (Not p) = not (eval s p)
+eval s (And p q) = eval s p && eval s q
+eval s (Imply p q) = eval s p <= eval s q
+
+--get the list of all Vars from the Prop
+vars :: Prop -> [Char]
+vars (Const _) = []
+vars (Var x) = [x]
+vars (Not p) = vars p 
+vars (And p q) = vars p ++ vars q
+vars (Imply p q) = vars p ++ vars q
+
+--remove duplicate items from a list
+rmdups :: Eq a => [a] -> [a]
+rmdups [] = []
+rmdups (x:xs) = x : filter (\y -> y /= x) xs
+
+--generate subsitutions
+bools :: Int -> [[Bool]]
+bools 1 = [[False], [True]]
+bools n = map (False:) bss ++ map (True:) bss
+            where bss = bools (n-1)
+
+--Generating list of subsitutions for a Proposition
+substs :: Prop -> [Subst]
+substs p = map (zip vs) (bools (length vs))
+            where vs = rmdups (vars p)
+
+p2 = Imply (And (Var 'A') (Var 'B')) (Var 'A')
+
+isTaut :: Prop -> Bool
+isTaut p = and [eval s p | s <- substs p] 
+
+--Abstract machine
+--Arithmetic expressions from integers and an addition operator
+data Expr = Val Int | Add Expr Expr
+                deriving (Eq, Ord, Show, Read)
+
+value :: Expr -> Int
+value (Val n) = n 
+value (Add x y) = value x + value y
+
+--control stacks for the abstract machine, which comprise a list of operations
+--to be performed by the machine after the current evaluation has been completed
+type Cont = [Op]
+
+data Op = EVAL Expr | ADD Int
+
+eval :: Expr -> Cont -> Int
+eval (Val n) c = exec c n
+eval (Add x y) c = eval x (EVAL y : c)
+
+exec :: Cont -> Int -> Int
+exec [] n = n 
+exec (EVAL y : c) n = eval y (ADD n : c)
+exec (ADD n : c) m = exec c (n+m)
