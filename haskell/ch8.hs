@@ -1,3 +1,5 @@
+import ListExtend
+
 type Pos = (Int,Int)
 type Trans = Pos -> Pos
 
@@ -68,13 +70,15 @@ add (Succ m) n = Succ (add m n)
 
 --our version of List type
 data List a = Nil | Cons a (List a)
-                deriving (Eq, Ord, Show, Read)
+                -- deriving (Eq, Ord, Show, Read)
 
 len :: List a -> Int 
 len Nil = 0
 len (Cons _ xs) = 1 + len xs
 
 --binary tree
+data Leaf a = TreeLeaf a
+
 data Tree a = Leaf a | Node (Tree a) a (Tree a)
                 deriving (Eq, Ord, Show, Read)
 
@@ -92,7 +96,8 @@ flatten (Node l x r) = (flatten l) ++ [x] ++ (flatten r)
 
 --Tautology checker
 data Prop = Const Bool | Var Char | Not Prop | And Prop Prop | Imply Prop Prop
-                deriving (Eq, Ord, Show, Read)
+                | Or Prop Prop | Equal Prop Prop
+                    deriving (Eq, Ord, Show, Read)
 
 type Subst = Assoc Char Bool
 
@@ -102,7 +107,9 @@ eval _ (Const b) = b
 eval s (Var x) = find x s 
 eval s (Not p) = not (eval s p)
 eval s (And p q) = eval s p && eval s q
-eval s (Imply p q) = eval s p <= eval s q
+eval s (Imply p q) = eval s p <= eval s q 
+eval s (Or p q) = eval s p || eval s q
+eval s (Equal p q) = eval s p == eval s q
 
 --get the list of all Vars from the Prop
 vars :: Prop -> [Char]
@@ -111,11 +118,8 @@ vars (Var x) = [x]
 vars (Not p) = vars p 
 vars (And p q) = vars p ++ vars q
 vars (Imply p q) = vars p ++ vars q
-
---remove duplicate items from a list
-rmdups :: Eq a => [a] -> [a]
-rmdups [] = []
-rmdups (x:xs) = x : filter (\y -> y /= x) xs
+vars (Or p q) = vars p ++ vars q
+vars (Equal p q) = vars p ++ vars q
 
 --generate subsitutions
 bools :: Int -> [[Bool]]
@@ -128,31 +132,110 @@ substs :: Prop -> [Subst]
 substs p = map (zip vs) (bools (length vs))
             where vs = rmdups (vars p)
 
-p2 = Imply (And (Var 'A') (Var 'B')) (Var 'A')
+p2 = Imply (And (Var 'A') (Equal (Var 'B') (Var 'C'))) (Or (Var 'A') (Var 'C'))
 
 isTaut :: Prop -> Bool
 isTaut p = and [eval s p | s <- substs p] 
 
 --Abstract machine
 --Arithmetic expressions from integers and an addition operator
-data Expr = Val Int | Add Expr Expr
+data Expr = Val Int | Add Expr Expr | Mult Expr Expr
                 deriving (Eq, Ord, Show, Read)
 
 value :: Expr -> Int
 value (Val n) = n 
 value (Add x y) = value x + value y
+value (Mult x y) = value x * value y
 
 --control stacks for the abstract machine, which comprise a list of operations
 --to be performed by the machine after the current evaluation has been completed
 type Cont = [Op]
 
-data Op = EVAL Expr | ADD Int
+data Op = EVALADD Expr | EVALMULT Expr | ADD Int | MULT Int
 
-eval :: Expr -> Cont -> Int
-eval (Val n) c = exec c n
-eval (Add x y) c = eval x (EVAL y : c)
+eval' :: Expr -> Cont -> Int
+eval' (Val n) c = exec c n
+eval' (Add x y) c = eval' x (EVALADD y : c)
+eval' (Mult x y) c = eval' x (EVALMULT y : c)
 
 exec :: Cont -> Int -> Int
 exec [] n = n 
-exec (EVAL y : c) n = eval y (ADD n : c)
+exec (EVALADD y : c) n = eval' y (ADD n : c)
+exec (EVALMULT y : c) n = eval' y (MULT n : c)
 exec (ADD n : c) m = exec c (n+m)
+exec (MULT n : c) m = exec c (n*m)
+
+value' e = eval' e []
+
+e1 = (Add (Add (Val 2) (Val 3)) (Mult (Val 4) (Val 5)))
+
+--Exercise 1. 
+mult :: Nat -> Nat -> Nat
+mult Zero _ = Zero
+mult _ Zero = Zero
+mult (Succ m) (Succ n) = add (Succ n) (mult m (Succ n))
+
+--Exercise 2.
+occurs' :: Ord a => a -> Tree a -> Bool
+occurs' x (Leaf y) = (compare x y) == EQ
+occurs' x (Node l y r)  | c == EQ = True
+                        | c == LT = occurs' x l
+                        | otherwise = occurs' x r 
+                            where c = compare x y
+
+--Exercise 3.
+data BTree a = BLeaf a | BNode (BTree a) (BTree a)
+                deriving (Eq, Ord, Show, Read)
+
+leavesCount :: BTree a -> Int
+leavesCount (BLeaf _) = 1
+leavesCount (BNode l r) = leavesCount l + leavesCount r 
+
+balanced :: BTree a -> Bool 
+balanced (BLeaf _) = True
+balanced (BNode l r) = (leavesCount l == leavesCount r)
+                        && balanced l && balanced r
+
+b1 = BNode (BNode (BLeaf 1) (BLeaf 2)) (BNode (BLeaf 3) (BLeaf 4))
+
+--Exercise 4.
+balance :: [a] -> BTree a
+balance [x] = BLeaf x
+balance xs = BNode (balance first) (balance second)
+                where (first, second) = halve xs
+
+--Exercise 5.
+-- folde f g replace Val with f, Add with g
+folde :: (Int -> a) -> (a -> a -> a) -> Expr -> a
+folde f g (Val x) = f x
+folde f g (Add x y) = g (folde f g x) (folde f g y)
+
+--Exercise 6.
+evalexpr :: Expr -> Int
+evalexpr e = folde id (+) e
+
+size :: Expr -> Int
+size e = folde (\_ -> 1) (+) e
+
+--Exercise 7.
+data Maybe' a = Nothing' | Just' a
+
+instance Eq a => Eq (Maybe' a) where
+    Nothing' == Nothing' = True
+    Just' x == Just' y = x == y
+    Nothing' == Just' _ = False
+    Just' _ == Nothing' = False
+
+-- instance Eq a => Eq [a] where
+--     [] == [] = True
+--     [] == (x:xs) = False
+--     (x:xs) == [] = False
+--     (x:xs) == (y:ys) = x == y && xs == ys
+instance Eq a => Eq (List a) where
+    Nil == Nil = True
+    Nil == (Cons _ _) = False
+    (Cons _ _) == Nil = False
+    (Cons x xs) == (Cons y ys) = x == y && xs == ys
+
+--Exercise 8.--see above
+--Exercise 9.--see above
