@@ -37,6 +37,10 @@ putBoardWithNumber [] _ = return ()
 putBoardWithNumber (x:xs) n = do  putRow n x
                                   putBoardWithNumber xs (n+1)
 
+--exercise 3 using sequence_ with list comprehension
+putBoard' :: Board -> IO ()
+putBoard' b = sequence_ [putRow n x | (n,x) <- zip [1..] b]
+
 getDigit :: String -> IO Int
 getDigit prompt = do  putStr prompt
                       x <- getChar
