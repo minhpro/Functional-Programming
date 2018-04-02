@@ -5,29 +5,19 @@ import System.IO
 newline :: IO ()
 newline = putChar '\n'
 
-getInteger :: String -> IO Int
-getInteger prompt = do  
+getNat :: String -> IO Int
+getNat prompt = do  
   putStr prompt
-  x <- getLine
-  if isInteger x then
-    return (strToInt x)
+  xs <- getLine
+  if xs /= [] && all isDigit xs then
+      return (read xs)
   else 
-    do  putStrLn "ERROR: Invalid digit"
-        getInteger prompt
-
-isInteger :: String -> Bool
-isInteger [] = False
-isInteger [x] = isDigit x
-isInteger (x:xs) = isDigit x && isInteger xs
+    do  putStrLn "ERROR: Invalid number"
+        getNat prompt
 
 strToInt :: String -> Int
 strToInt = foldl (\x y -> x * 10 + digitToInt y) 0
--- strToInt xs = strToInt' 0 xs --iteractive solution
-  
--- strToInt' :: Int -> String -> Int
--- strToInt' result [] = result
--- strToInt' result (x:xs) = strToInt' (result * 10 + (digitToInt x)) xs
-                                          
+
 --Exercise 1
 putStr' :: String -> IO ()
 putStr' xs = sequence_ [putChar c | c <- xs]
@@ -56,14 +46,14 @@ adder = do
 summer :: Int -> [Int] -> IO ()
 summer n xs | n == 0 = putStrLn ("The total is " ++ (show (sum xs)))
             | otherwise = do
-                x <- getInteger []
+                x <- getNat []
                 summer (n-1) (x:xs)
 
 --Exercise 5
 adder' :: IO ()
 adder' = do 
   n <- getDigit "How many numbers? "
-  xs <- sequence [getInteger [] | _ <- [1..n]]
+  xs <- sequence [getNat [] | _ <- [1..n]]
   putStrLn ("The total is " ++ (show (sum xs)))
 
 --Exercise 6

@@ -23,3 +23,14 @@ halve xs = splitAt (div (length xs) 2) xs
 rmdups :: Eq a => [a] -> [a]
 rmdups [] = []
 rmdups (x:xs) = x : filter (\y -> y /= x) xs
+
+--foldrn (+) 0 [[1,2,3], [4,5,6], [7,8,9]] = [12, 15, 18]
+foldn :: (a->b->b) -> b -> [[a]] -> [b]
+foldn f v [] = []
+foldn f v xs = if isEmpty (head xs) then 
+                    [] 
+               else
+                    foldr f v (map head xs) : foldn f v (map tail xs)
+
+isEmpty :: [a] -> Bool
+isEmpty xs = length xs == 0

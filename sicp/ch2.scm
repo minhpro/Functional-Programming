@@ -616,6 +616,7 @@
             (accumulate-n op init (map cdr seqs)))))
 
 ;: (accumulate-n + 0 s)
+;: (accumulate-n + 0 (list (list 1 2 3 10) (list 3 4 5) (list 7 8 9))) -->error
 
 ;; EXERCISE 2.37
 
