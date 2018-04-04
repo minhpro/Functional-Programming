@@ -129,5 +129,56 @@ type Pos = (Int,Int)
 goto :: Pos -> IO ()
 goto (x,y) = putStr ("\ESC[" ++ show y ++ ";" ++ show x ++ "H")
 
+--Game tree
+data Tree a = Node a [Tree a] 
+                    deriving Show
 
- 
+gametree :: Grid -> Player -> Tree Grid
+gametree g p = Node g [gametree g' (next p) | g' <- moves g p]
+
+moves :: Grid -> Player -> [Grid]
+moves g p | won g = []
+          | full g = []
+          | otherwise = concat [move g i p | i <- [0..((size^2)-1)]]
+
+--Pruning a tree
+prune :: Int -> Tree a -> Tree a
+prune 0 (Node x _) = Node x []
+prune n (Node x ts) = Node x [prune (n-1) t | t <- ts]
+
+--prune 5 (gametree empty 0) produces a game tree of maximum depth five. 
+--Under lazy evaluation, as much of the trees as required by the prune function
+--will actually be produced
+
+{-|
+Minimax algorithm
+Determine the best next move
+Labelling every node in the tree with a player value in the following manner:
+    .Leaves are labelled with the wining player at this point if there is one, and
+    the blank player otherwise
+    . Other nodes are labelled with the minimum or maximum of the player labels 
+    from the child nodes on level down, depending on whose turn it is to move at
+    this point: on player O's turn we take the minimum of the child labels, and
+    on X's turn we take the maximum. The order of labels : O < B < X
+-}
+
+minimax :: Tree Grid -> Tree (Grid,Player)
+minimax (Node g [])
+        | wins O g = Node (g,O) []
+        | wins X g = Node (g,X) []
+        | otherwise = Node (g,B) []
+minimax (Node g ts)
+        | onTurn == O = Node (g, minimum ps) ts'
+        | onTurn == X = Node (g, maximum ps) ts'
+            where 
+                onTurn = turn g
+                ts' = map minimax ts
+                ps = [p | Node (_,p) _ <- ts']
+
+depth :: Int
+depth = 5
+
+-- the best move under the minimax algorith is given by moving to any grid 
+-- with the same label as the root.
+bestmove :: Grid -> Player -> Grid
+bestmove g p = head []
