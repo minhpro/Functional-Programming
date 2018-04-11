@@ -188,10 +188,10 @@ bestmove g p = head [g' | Node (g',p') _ <- ts, p' == best]
                         Node (_,best) ts = minimax tree
 
 --Human vs computer
--- main :: IO ()
--- main = do 
---         hSetBuffering stdout NoBuffering
---         play empty O
+main :: IO ()
+main = do 
+        hSetBuffering stdout NoBuffering
+        play empty O
         
 play :: Grid -> Player -> IO ()
 play g p = do
@@ -199,29 +199,6 @@ play g p = do
     goto(1,1)
     putGrid g 
     play' g p
-
--- play' :: Grid -> Player -> IO ()
--- play' g p 
---     | wins O g  = putStrLn "Player O wins!\n"
---     | wins X g  = putStrLn "Player X wins!\n"
---     | full g    = putStrLn "It's a draw!\n"
---     | p == O    = do 
---                     i <- getNat (prompt p)
---                     case move g i p of
---                         [] -> do putStrLn "ERROR: Invalid move"
---                                  play' g p
---                         [g'] -> play g' (nextPlayer p)
---     | p == X    = do 
---                     putStrLn "Player X is thinking.."
---                     (play $! (bestmove g p)) (nextPlayer p)   
-
---Choose a random move from the list of best moves
---randomRIO :: (Int,Int) -> IO Int
-bestmoves :: Grid -> Player -> [Grid]
-bestmoves g p = [g' | Node (g',p') _ <- ts, p' == best]
-                    where
-                        tree = prune depth (gametree g p)
-                        Node (_,best) ts = minimax tree
 
 play' :: Grid -> Player -> IO ()
 play' g p 
@@ -236,19 +213,120 @@ play' g p
                         [g'] -> play g' (nextPlayer p)
     | p == X    = do 
                     putStrLn "Player X is thinking.."
-                    i <- randomRIO(0,l-1)
-                    play (gs !! i) (nextPlayer p) 
-                        where 
-                            gs = bestmoves g p
-                            l = length gs
+                    (play $! (bestmove g p)) (nextPlayer p)   
+
+--Choose a random move from the list of best moves
+--randomRIO :: (Int,Int) -> IO Int
+-- bestmoves :: Grid -> Player -> [Grid]
+-- bestmoves g p = [g' | Node (g',p') _ <- ts, p' == best]
+--                     where
+--                         tree = prune depth (gametree g p)
+--                         Node (_,best) ts = minimax tree
+
+-- play' :: Grid -> Player -> IO ()
+-- play' g p 
+--     | wins O g  = putStrLn "Player O wins!\n"
+--     | wins X g  = putStrLn "Player X wins!\n"
+--     | full g    = putStrLn "It's a draw!\n"
+--     | p == O    = do 
+--                     i <- getNat (prompt p)
+--                     case move g i p of
+--                         [] -> do putStrLn "ERROR: Invalid move"
+--                                  play' g p
+--                         [g'] -> play g' (nextPlayer p)
+--     | p == X    = do 
+--                     putStrLn "Player X is thinking.."
+--                     i <- randomRIO(0,l-1)
+--                     play (gs !! i) (nextPlayer p) 
+--                         where 
+--                             gs = bestmoves g p
+--                             l = length gs
                     
 --User decide to play first or second
-main :: IO ()
-main = do 
-        hSetBuffering stdout NoBuffering
-        putStr "Do you want to play first?(yes/no):"
-        answer <- getLine
-        if answer == "yes" then
-            play empty O
-        else
-            play empty X
+-- main :: IO ()
+-- main = do 
+--         hSetBuffering stdout NoBuffering
+--         putStr "Do you want to play first?(yes/no):"
+--         answer <- getLine
+--         if answer == "yes" then
+--             play empty O
+--         else
+--             play empty X
+
+--Choose the move that attempts to take the quickest route to a win,
+--by calculating the depths of the game tree
+-- minimax :: Tree Grid -> Tree (Grid, (Player, Int))
+-- minimax (Node g []) 
+--             | wins O g = Node (g,(O,0)) []
+--             | wins X g = Node (g,(X,0)) []
+--             | otherwise = Node (g,(B,0)) []
+-- minimax (Node g ts)
+--             | onTurn == O = Node (g, minLabel labels) ts'
+--             | onTurn == X = Node (g, maxLabel labels) ts'
+--                 where
+--                     onTurn = turn g
+--                     ts' = map minimax ts
+--                     labels = [l | Node (_,l) _ <- ts']
+--                     minLabel [(p,d)] = (p,d)
+--                     minLabel ((p,d):ls)
+--                                 | p' < p = (p',d')
+--                                 | p' == p && d' < d = (p',d')
+--                                 | otherwise = (p,d)
+--                                     where (p',d') = minLabel ls
+--                     maxLabel [(p,d)] = (p,d)
+--                     maxLabel ((p,d):ls)
+--                                 | p' > p = (p',d')
+--                                 | p' == p && d' < d = (p',d')
+--                                 | otherwise = (p,d)
+--                                     where (p',d') = maxLabel ls
+                            
+--Generate game tree once incomplete
+-- bestmove :: Tree (Grid,Player) -> Grid
+-- bestmove (Node (g,p) ts) = head [g' | Node (g',p') _ <- ts, p' == p]
+
+-- play :: Grid -> Player -> IO ()
+-- play g p = do
+--     play'' (minimax (prune depth (gametree g p)))
+
+-- play'' :: Tree (Grid,Player) -> IO ()
+-- play'' (Node (g,p) ts) = do
+--     cls
+--     goto(1,1)
+--     putGrid g 
+--     play' (Node (g,p) ts)
+
+-- play' :: Tree (Grid,Player) -> IO ()
+-- play' (Node (g,p) ts)  
+--     | wins O g  = putStrLn "Player O wins!\n"
+--     | wins X g  = putStrLn "Player X wins!\n"
+--     | full g    = putStrLn "It's a draw!\n"
+--     | length ts == 0 = play' (minimax (prune depth (gametree g p)))
+--     | p == O    = 
+--         do 
+--             i <- getNat (prompt p)
+--             case move g i p of
+--                 [] -> do putStrLn "ERROR: Invalid move"
+--                          play' (Node (g,p) ts)
+--                 [g'] -> case find (\(Node (g'',_) _) -> g'' == g') ts of
+--                             Nothing -> play'' (minimax 
+--                                                 (prune depth 
+--                                                     (gametree g' (nextPlayer p))))
+--                             Just ts' -> play'' ts'
+--     | p == X    = do 
+--                     putStrLn "Player X is thinking.."
+--                     (play $! (bestmove (Node (g,p) ts))) (nextPlayer p) 
+
+--alpha-beta pruning
+alpha_beta :: Tree Grid -> Tree (Grid,Player)
+alpha_beta :: Tree Grid -> Tree (Grid,Player)
+minimax (Node g [])
+        | wins O g = Node (g,O) []
+        | wins X g = Node (g,X) []
+        | otherwise = Node (g,B) []
+minimax (Node g ts)
+        | onTurn == O = Node (g, minimum ps) ts'
+        | onTurn == X = Node (g, maximum ps) ts'
+            where 
+                onTurn = turn g
+                ts' = map minimax ts
+                ps = [p | Node (_,p) _ <- ts']
