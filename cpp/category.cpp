@@ -18,3 +18,11 @@ int main()
     unit("nothing");
     return 0;
 }
+
+int fac(int n) {
+    int acc = 1;
+    for (int i = 1; i <= n; i++) {
+        acc = i * acc;
+    }
+    return acc;
+}
