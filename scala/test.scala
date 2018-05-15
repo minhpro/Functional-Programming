@@ -36,3 +36,33 @@ def move(d: Direction, p: Point): Point = d match {
 }
 
 // def moves(ds: List[Direction], p: Point): Point
+
+sealed trait Shape
+final case class Circle(radius: Double) extends Shape
+final case class Rectangle(width: Double, height: Double) extends Shape
+
+case class Node (
+    data: Int,
+    next: Node
+)
+
+sealed trait Option[+A]
+case object None extends Option[Nothing]
+case class Some[+A](get: A) extends Option[A] 
+
+sealed trait Tree[+A]
+case class Leaf[A](value: A) extends Tree[A]
+case class Branch[A](left: Tree[A], right: Tree[A]) extends Tree[A]
+
+sealed trait List[+A]
+case object Nil extends List[Nothing]
+case class Cons[+A](head: A, tail: List[A]) extends List[A]
+
+def curry[A, B, C](f: (A, B) => C): A => (B => C) = a => b => f(a, b)
+
+def sum(x: Int, y: Int) = x + y
+
+def currySum = curry(sum)
+
+def sum1 = currySum(1)
+
