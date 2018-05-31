@@ -1,4 +1,5 @@
 import ListExtend
+import Data.List
 
 type Pos = (Int,Int)
 type Trans = Pos -> Pos
@@ -7,8 +8,20 @@ type Pair a = (a,a)
 
 type Assoc k v = [(k,v)]
 
-find :: Eq k => k -> Assoc k v -> v
-find k t = head [v | (k',v) <- t, k == k']
+find' :: Eq k => k -> Assoc k v -> v
+find' k t = head [v | (k',v) <- t, k == k']
+
+--[(1,2), (2,3), (2,4), (3,5), (3,6)] => [(1,2), (2,7), (3,11)]
+reduceByKey :: Ord k => (v -> v -> v) -> Assoc k v -> Assoc k v
+reduceByKey f xs = reduceByKey' f (sortOn fst xs)
+
+--Assume is sorted
+reduceByKey' :: Eq k => (v -> v -> v) -> Assoc k v -> Assoc k v
+reduceByKey' _ [] = []
+reduceByKey' _ [x] = [x]
+reduceByKey' f ((k,v):(k',v'):xs) = 
+    if k == k' then reduceByKey' f ((k, f v v'):xs)
+    else (k,v) : reduceByKey' f ((k',v'):xs)
 
 data Move = North | South | East | West --constructors
                 deriving (Eq, Ord, Show, Read)
@@ -104,7 +117,7 @@ type Subst = Assoc Char Bool
 --evaluate a Proposition given a Subst
 eval :: Subst -> Prop -> Bool 
 eval _ (Const b) = b 
-eval s (Var x) = find x s 
+eval s (Var x) = find' x s 
 eval s (Not p) = not (eval s p)
 eval s (And p q) = eval s p && eval s q
 eval s (Imply p q) = eval s p <= eval s q 
